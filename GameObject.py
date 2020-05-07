@@ -85,12 +85,12 @@ class Player(GameObject):
         base.cTrav.addCollider(self.collider, base.pusher)
 
         self.actor.loop("stand")
-    
+
     def update(self, keys, dt):
         GameObject.update(self, dt)
-        
+
         self.walking = False
-        
+
         if keys["up"]:
             self.walking = True
             self.velocity.addY(self.acceleration * dt)
@@ -147,4 +147,43 @@ class Enemy(GameObject):
 
 
 class WalkingEnemy(Enemy):
-    pass
+    def __init(self, pos):
+        Enemy.__init__(self, pos,
+                       "Models/SimpleEnemy/SimpleEnemy",
+                       {
+                           "stand": "Models/SimpleEnemy/simpleEnemy-stand",
+                           "walk": "Models/SimpleEnemy/simpleEnemy-walk",
+                           "attack": "Models/SimpleEnemy/simpleEnemy-attack",
+                           "die": "Models/SimpleEnemy/simpleEnemy-die",
+                           "spawn": "Models/SimpleEnemy/simpleEnemy-spawn"
+                       },
+                       3.0,
+                       7.0,
+                       "walkingEnemy")
+
+        self.attackDistance = 0.75
+
+        self.acceleration = 100.0
+
+        self.yVector = Vec2(0, 1)
+
+    def run_logic(self, player, dt):
+        vector_to_player = player.actor.getPos() - self.actor.getPos()
+
+        vector_to_player_2d = vector_to_player.getXy()
+        distance_to_player = vector_to_player_2d.length()
+
+        vector_to_player_2d.normalize()
+
+        heading = self.yVector.signedAngleDeg(vector_to_player_2d)
+
+        if distance_to_player > self.attackDistance * 0.9:
+            self.walking = True
+            vector_to_player.setZ(0)
+            vector_to_player.normalize()
+            self.velocity += vector_to_player * self.acceleration * dt
+        else:
+            self.walking = False
+            self.velocity.set(0, 0, 0)
+
+        self.actor.setH(heading)
