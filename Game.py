@@ -13,12 +13,17 @@ class Game(ShowBase):
 
         self.disableMouse()
 
-        self.environment = self.loader.loadModel("models/environment")
+        self.environment = self.loader.loadModel("Models/Environment/environment")
         self.environment.reparentTo(self.render)
 
         self.tempActor = Actor("Models/PandaChan/act_p3d_chan", {"walk": "Models/PandaChan/a_p3d_chan_run"})
         self.tempActor.reparentTo(self.render)
-        self.tempActor.setPos(0, 7, 0)
+        self.tempActor.getChild(0).setH(180)
+        self.tempActor.loop("walk")
+
+        # Top down view
+        self.camera.setPos(0, 0, 32)
+        self.camera.setP(-90)
 
 game = Game()
 game.run()
