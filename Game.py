@@ -1,8 +1,9 @@
-from direct.showbase.ShowBase import ShowBase
-from panda3d.core import WindowProperties
-from panda3d.core import AmbientLight
-from panda3d.core import Vec4
 from direct.actor.Actor import Actor
+from direct.showbase.ShowBase import ShowBase
+from panda3d.core import AmbientLight
+from panda3d.core import DirectionalLight
+from panda3d.core import Vec4
+from panda3d.core import WindowProperties
 
 
 class Game(ShowBase):
@@ -31,6 +32,13 @@ class Game(ShowBase):
         ambientLight.setColor(Vec4(0.2, 0.2, 0.2, 1))
         self.ambientLightNodePath = self.render.attachNewNode(ambientLight)
         self.render.setLight(self.ambientLightNodePath)
+
+        mainLight = DirectionalLight("main light")
+        self.mainLightNodePath = self.render.attachNewNode(mainLight)
+        self.mainLightNodePath.setHpr(45, -45, 0)
+        self.render.setLight(self.mainLightNodePath)
+
+        self.render.setShaderAuto()
 
 game = Game()
 game.run()
