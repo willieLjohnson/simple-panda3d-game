@@ -120,7 +120,30 @@ class Player(GameObject):
 
 
 class Enemy(GameObject):
-    pass
+    def __init__(self, pos, model_name, model_anims, max_health, max_speed, collider_name):
+        GameObject.__init__(self, pos, model_name, model_anims, max_health, max_speed, collider_name)
+        self.scoreValue = 1
+
+    def update(self, player, dt):
+        GameObject.update(self, dt)
+
+        self.run_logic(player, dt)
+
+        if self.walking:
+            walking_control = self.actor.getAnimControl("walk")
+            if not walking_control.isPlaying():
+                self.actor.loop("walk")
+        else:
+            spawn_control = self.actor.getAnimControl("spawn")
+            if spawn_control is None or not spawn_control.isPlaying():
+                attack_control = self.actor.getAnimControl("attack")
+                if attack_control is None or not attack_control.isPlaying():
+                    stand_control = self.actor.getAnimControl("stand")
+                    if not stand_control.isPlaying():
+                        self.actor.loop("stand")
+
+    def run_logic(self, player, dt):
+        pass
 
 
 class WalkingEnemy(Enemy):
