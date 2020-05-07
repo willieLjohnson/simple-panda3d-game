@@ -52,6 +52,21 @@ class GameObject:
         if self.health > self.maxHealth:
             self.health = self.maxHealth
 
+    def cleanup(self):
+        if self.collider is not None and not self.collider.isEmpty():
+            self.collider.clearPythonTag("owner")
+            base.cTrav.removeCollider(self.collider)
+            base.pusher.removeCollider(self.collider)
+
+        if self.actor is not None:
+            self.actor.cleanup()
+            self.actor.removeNode()
+            self.actor = None
+
+        self.collider = None
+
+
+
 class Player(GameObject):
     pass
 
