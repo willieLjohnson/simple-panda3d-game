@@ -26,6 +26,26 @@ class GameObject:
         self.collider = self.actor.attachNewNode(collider_node)
         self.collider.setPythonTag("owner", self)
 
+    def update(self, dt):
+        speed = self.velocity.length()
+        if speed > self.maxSpeed:
+            self.velocity.normalize()
+            self.velocity *= self.maxSpeed
+            speed = self.maxSpeed
+
+        if not self.walking:
+            friction_val = FRICTION * dt
+            if friction_val > speed:
+                self.velocity.set(0, 0, 0)
+            else:
+                friction_vec = -self.velocity
+                friction_vec.normalize()
+                friction_vec *= friction_val
+
+                self.velocity += friction_vec
+
+        self.actor.setPos(self.actor.getPos() + self.velocity * dt)
+
 
 class Player(GameObject):
     pass
