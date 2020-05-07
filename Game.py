@@ -1,6 +1,9 @@
 from direct.actor.Actor import Actor
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import AmbientLight
+from panda3d.core import CollisionHandlerPusher
+from panda3d.core import CollisionSphere, CollisionNode
+from panda3d.core import CollisionTraverser
 from panda3d.core import DirectionalLight
 from panda3d.core import Vec4, Vec3
 from panda3d.core import WindowProperties
@@ -61,6 +64,15 @@ class Game(ShowBase):
         self.accept("mouse1-up", self.updateKeyMap, ["shoot", False])
 
         self.updateTask = self.taskMgr.add(self.update, "update")
+
+        # Collision detection
+        self.cTrav = CollisionTraverser()
+        self.pusher = CollisionHandlerPusher()
+
+        colliderNode = CollisionNode("player")
+        colliderNode.addSolid(CollisionSphere(0, 0, 0, 0.3))
+        collider = self.tempActor.attachNewNode(colliderNode)
+        # collider.show()
 
     def updateKeyMap(self, controlName, controlState):
         self.keyMap[controlName] = controlState
