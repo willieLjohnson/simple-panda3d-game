@@ -66,9 +66,57 @@ class GameObject:
         self.collider = None
 
 
-
 class Player(GameObject):
-    pass
+    def __init__(self):
+        GameObject.__init__(self,
+                            Vec3(0, 0, 0),
+                            "Models/PandaChan/act_p3d_chan",
+                            {
+                                "stand": "Models/PandaChan/a_p3d_chan_idle",
+                                "walk": "Models/PandaChan/a_p3d_chan_run"
+                            },
+                            5,
+                            10,
+                            "player")
+
+        self.actor.getChild(0).setH(180)
+
+        base.pusher.addCollider(self.collider, self.actor)
+        base.cTrav.addCollider(self.collider, base.pusher)
+
+        self.actor.loop("stand")
+    
+    def update(self, keys, dt):
+        GameObject.update(self, dt)
+        
+        self.walking = False
+        
+        if keys["up"]:
+            self.walking = True
+            self.velocity.addY(self.acceleration * dt)
+        if keys["down"]:
+            self.walking = True
+            self.velocity.addY(-self.acceleration * dt)
+        if keys["left"]:
+            self.walking = True
+            self.velocity.addX(-self.acceleration * dt)
+        if keys["right"]:
+            self.walking = True
+            self.velocity.addX(self.acceleration * dt)
+
+        if self.walking:
+            stand_control = self.actor.getAnimControl("stand")
+            if stand_control.isPlaying():
+                stand_control.stop()
+
+            walk_control = self.actor.getAnimControl("walk")
+            if not walk_control.isPlaying():
+                self.actor.loop("walk")
+        else:
+            stand_control = self.actor.getAnimControl("stand")
+            if not stand_control.isPlaying():
+                self.actor.stop("walk")
+                self.actor.loop("stand")
 
 
 class Enemy(GameObject):
