@@ -1,5 +1,6 @@
 from direct.actor.Actor import Actor
 from direct.showbase.ShowBase import ShowBase
+
 from panda3d.core import AmbientLight
 from panda3d.core import CollisionHandlerPusher
 from panda3d.core import CollisionSphere, CollisionNode
@@ -9,36 +10,18 @@ from panda3d.core import DirectionalLight
 from panda3d.core import Vec4, Vec3
 from panda3d.core import WindowProperties
 
+from GameObject import *
+
 
 class Game(ShowBase):
     def __init__(self):
         ShowBase.__init__(self)
 
+        self.disableMouse()
+
         properties = WindowProperties()
         properties.setSize(1000, 750)
         self.win.requestProperties(properties)
-
-        self.disableMouse()
-
-        self.keyMap = {
-            "up": False,
-            "down": False,
-            "left": False,
-            "right": False,
-            "shoot": False
-        }
-
-        self.environment = self.loader.loadModel("Models/Environment/environment")
-        self.environment.reparentTo(self.render)
-
-        self.tempActor = Actor("Models/PandaChan/act_p3d_chan", {"walk": "Models/PandaChan/a_p3d_chan_run"})
-        self.tempActor.reparentTo(self.render)
-        self.tempActor.getChild(0).setH(180)
-        self.tempActor.loop("walk")
-
-        # Top down view
-        self.camera.setPos(0, 0, 32)
-        self.camera.setP(-90)
 
         ambient_light = AmbientLight("ambient light")
         ambient_light.setColor(Vec4(0.2, 0.2, 0.2, 1))
@@ -52,6 +35,21 @@ class Game(ShowBase):
 
         self.render.setShaderAuto()
 
+        self.environment = self.loader.loadModel("Models/Environment/environment")
+        self.environment.reparentTo(self.render)
+
+        # Top down view
+        self.camera.setPos(0, 0, 32)
+        self.camera.setP(-90)
+
+        self.keyMap = {
+            "up": False,
+            "down": False,
+            "left": False,
+            "right": False,
+            "shoot": False
+        }
+
         # Input
         self.accept("w", self.update_key_map, ["up", True])
         self.accept("w-up", self.update_key_map, ["up", False])
@@ -64,20 +62,10 @@ class Game(ShowBase):
         self.accept("mouse1", self.update_key_map, ["shoot", True])
         self.accept("mouse1-up", self.update_key_map, ["shoot", False])
 
-        self.updateTask = self.taskMgr.add(self.update, "update")
-
-        # Collision detection
-        self.cTrav = CollisionTraverser()
         self.pusher = CollisionHandlerPusher()
+        self.cTrav = CollisionTraverser()
+
         self.pusher.setHorizontal(True)
-
-        collider_node = CollisionNode("player")
-        collider_node.addSolid(CollisionSphere(0, 0, 0, 0.3))
-        collider = self.tempActor.attachNewNode(collider_node)
-        # collider.show()
-
-        self.pusher.addCollider(collider, self.tempActor)
-        self.cTrav.addCollider(collider, self.pusher)
 
         # Environment walls
         wall_solid = CollisionTube(-8.0, 0, 0, 8.0, 0, 0, 0.2)
@@ -104,20 +92,22 @@ class Game(ShowBase):
         wall = self.render.attachNewNode(wall_node)
         wall.setX(-8.0)
 
+        self.updateTask = self.taskMgr.add(self.update, "update")
+
+        self.player = Player()
+
+        self.temp_enemy = WalkingEnemy(Vec3(5, 0, 0))
+
     def update_key_map(self, control_name, control_state):
         self.keyMap[control_name] = control_state
 
     def update(self, task):
         dt = globalClock.getDt()
 
-        if self.keyMap["up"]:
-            self.tempActor.setPos(self.tempActor.getPos() + Vec3(0, 5.0 * dt, 0))
-        if self.keyMap["down"]:
-            self.tempActor.setPos(self.tempActor.getPos() + Vec3(0, -5.0 * dt, 0))
-        if self.keyMap["left"]:
-            self.tempActor.setPos(self.tempActor.getPos() + Vec3(-5.0 * dt, 0, 0))
-        if self.keyMap["right"]:
-            self.tempActor.setPos(self.tempActor.getPos() + Vec3(5.0 * dt, 0, 0))
+        self.player.update(self.keyMap, dt)
+
+        self.temp_enemy.update(self.player, dt)
+
         if self.keyMap["shoot"]:
             print("Zap!")
 

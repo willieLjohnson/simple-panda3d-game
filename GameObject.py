@@ -8,7 +8,7 @@ FRICTION = 150.0
 class GameObject:
     def __init__(self, pos, model_name, model_anims, max_health, max_speed, collider_name):
         self.actor = Actor(model_name, model_anims)
-        self.actor.reparentTo(self.render)
+        self.actor.reparentTo(render)
         self.actor.setPos(pos)
 
         self.maxHealth = max_health
@@ -147,9 +147,9 @@ class Enemy(GameObject):
 
 
 class WalkingEnemy(Enemy):
-    def __init(self, pos):
+    def __init__(self, pos):
         Enemy.__init__(self, pos,
-                       "Models/SimpleEnemy/SimpleEnemy",
+                       "Models/SimpleEnemy/simpleEnemy",
                        {
                            "stand": "Models/SimpleEnemy/simpleEnemy-stand",
                            "walk": "Models/SimpleEnemy/simpleEnemy-walk",
