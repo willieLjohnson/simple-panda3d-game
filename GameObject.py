@@ -46,6 +46,11 @@ class GameObject:
 
         self.actor.setPos(self.actor.getPos() + self.velocity * dt)
 
+    def alter_health(self, d_health):
+        self.health += d_health
+
+        if self.health > self.maxHealth:
+            self.health = self.maxHealth
 
 class Player(GameObject):
     pass
