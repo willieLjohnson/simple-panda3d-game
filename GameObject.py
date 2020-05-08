@@ -3,6 +3,7 @@ from direct.actor.Actor import Actor
 from panda3d.core import BitMask32
 from panda3d.core import CollisionRay, CollisionHandlerQueue
 from panda3d.core import CollisionSphere, CollisionNode
+from panda3d.core import Plane, Point3
 import math
 
 FRICTION = 150.0
@@ -123,10 +124,47 @@ class Player(GameObject):
         self.beamModel.setLightOff()
         self.beamModel.hide()
 
+        self.lastMousePos = Vec2(0, 0)
+
+        self.groundPlane = Plane(Vec3(0, 0, 1), Vec3(0, 0, 0))
+
+        self.yVector = Vec2(0, 1)
+
     def update(self, keys, dt):
         GameObject.update(self, dt)
 
         self.walking = False
+
+        mouse_watcher = base.mouseWatcherNode
+        if mouse_watcher.hasMouse():
+            mouse_pos = mouse_watcher.getMouse()
+        else:
+            mouse_pos = self.lastMousePos
+
+        mouse_pos_3d = Point3()
+        near_point = Point3()
+        far_point = Point3()
+
+        base.camLens.extrude(mouse_pos, near_point, far_point)
+
+        self.groundPlane.intersectsLine(mouse_pos_3d,
+                                        render.getRelativePoint(base.camera, near_point),
+                                        render.getRelativePoint(base.camera, far_point))
+
+        firing_vector = Vec3(mouse_pos_3d - self.actor.getPos())
+        firing_vector_2d = firing_vector.getXy()
+        firing_vector_2d.normalize()
+        firing_vector.normalize()
+
+        heading = self.yVector.signedAngleDeg(firing_vector_2d)
+
+        self.actor.setH(heading)
+
+        if firing_vector.length() > 0.001:
+            self.ray.setOrigin(self.actor.getPos())
+            self.ray.setDirection(firing_vector)
+
+        self.lastMousePos = mouse_pos
 
         if keys["up"]:
             self.walking = True
