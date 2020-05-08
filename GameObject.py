@@ -1,5 +1,6 @@
 from panda3d.core import Vec3, Vec2
 from direct.actor.Actor import Actor
+from panda3d.core import BitMask32
 from panda3d.core import CollisionRay, CollisionHandlerQueue
 from panda3d.core import CollisionSphere, CollisionNode
 import math
@@ -88,6 +89,16 @@ class Player(GameObject):
 
         self.actor.loop("stand")
 
+        mask = BitMask32()
+        mask.setBit(1)
+
+        self.collider.node().setIntoCollideMask(mask)
+
+        mask = BitMask32()
+        mask.setBit(1)
+
+        self.collider.node().setFromCollideMask(mask)
+
         self.ray = CollisionRay(0, 0, 0, 0, 1, 0)
         ray_node = CollisionNode("playerRay")
         ray_node.addSolid(self.ray)
@@ -97,7 +108,14 @@ class Player(GameObject):
 
         base.cTrav.addCollider(self.rayNodePath, self.rayQueue)
 
-        self.damangePerSecond = -5.0
+        mask = BitMask32()
+        mask.setBit(2)
+        ray_node.setFromCollideMask(mask)
+
+        mask = BitMask32()
+        ray_node.setIntoCollideMask(mask)
+
+        self.damagePerSecond = -5.0
 
     def update(self, keys, dt):
         GameObject.update(self, dt)
@@ -127,7 +145,7 @@ class Player(GameObject):
                 if hit_node_path.hasPythonTag("owner"):
                     hit_object = hit_node_path.getPythonTag("owner")
                     if not isinstance(hit_object, TrapEnemy):
-                        hit_object.alter_health(self.damangePerSecond * dt)
+                        hit_object.alter_health(self.damagePerSecond * dt)
 
         if self.walking:
             stand_control = self.actor.getAnimControl("stand")
@@ -147,6 +165,7 @@ class Player(GameObject):
         base.cTrav.removeCollider(self.rayNodePath)
 
         GameObject.cleanup(self)
+
 
 class Enemy(GameObject):
     def __init__(self, pos, model_name, model_anims, max_health, max_speed, collider_name):
@@ -196,6 +215,11 @@ class WalkingEnemy(Enemy):
 
         self.yVector = Vec2(0, 1)
 
+        mask = BitMask32()
+        mask.setBit(2)
+
+        self.collider.node().setIntoCollideMask(mask)
+
     def run_logic(self, player, dt):
         vector_to_player = player.actor.getPos() - self.actor.getPos()
 
@@ -238,6 +262,18 @@ class TrapEnemy(Enemy):
         self.moveDirection = 0
 
         self.ignorePlayer = False
+
+        mask = BitMask32()
+        mask.setBit(2)
+        mask.setBit(1)
+
+        self.collider.node().setIntoCollideMask(mask)
+
+        mask = BitMask32()
+        mask.setBit(2)
+        mask.setBit(1)
+
+        self.collider.node().setFromCollideMask(mask)
 
     def run_logic(self, player, dt):
         if self.moveDirection != 0:
