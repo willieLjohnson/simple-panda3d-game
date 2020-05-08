@@ -100,6 +100,38 @@ class Game(ShowBase):
 
         self.temp_trap = TrapEnemy(Vec3(-2, 7, 0))
 
+        self.pusher.add_in_pattern("%fn-into-%in")
+
+        self.accept("trapEnemy-into-wall", self.stop_trap)
+        self.accept("trapEnemy-into-trapEnemy", self.stop_trap)
+        self.accept("trapEnemy-into-player", self.trap_hits_something)
+        self.accept("trapEnemy-into-walkingEnemy", self.trap_hits_something)
+
+    def stop_trap(self, entry):
+        collider = entry.getFromNodePath()
+        if collider.hasPythonTag("owner"):
+            trap = collider.getPythonTag("owner")
+            trap.moveDirection = 0
+            trap.ignorePlayer = False
+
+    def trap_hits_something(self, entry):
+        collider = entry.getFromNodePath()
+        if collider.hasPythonTag("owner"):
+            trap = collider.getPythonTag("owner")
+
+            if trap.moveDirection == 0:
+                return
+
+            collider = entry.getIntoNodePath()
+            if collider.hasPythonTag("owner"):
+                obj = collider.getPythonTag("owner")
+                if isinstance(obj, Player):
+                    if not trap.ignorePlayer:
+                        obj.alter_health(-1)
+                        trap.ignorePlayer = True
+                else:
+                    obj.alter_health(-10)
+
     def update_key_map(self, control_name, control_state):
         self.keyMap[control_name] = control_state
 
