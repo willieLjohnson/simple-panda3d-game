@@ -117,6 +117,12 @@ class Player(GameObject):
 
         self.damagePerSecond = -5.0
 
+        self.beamModel = loader.loadModel("Models/BambooLaser/bambooLaser")
+        self.beamModel.reparentTo(self.actor)
+        self.beamModel.setZ(1.5)
+        self.beamModel.setLightOff()
+        self.beamModel.hide()
+
     def update(self, keys, dt):
         GameObject.update(self, dt)
 
@@ -141,11 +147,17 @@ class Player(GameObject):
                 hit_pos = ray_hit.getSurfacePoint(render)
 
                 hit_node_path = ray_hit.getIntoNodePath()
-                print(hit_node_path)
                 if hit_node_path.hasPythonTag("owner"):
                     hit_object = hit_node_path.getPythonTag("owner")
                     if not isinstance(hit_object, TrapEnemy):
                         hit_object.alter_health(self.damagePerSecond * dt)
+
+                beam_length = (hit_pos - self.actor.getPos()).length()
+                self.beamModel.setSy(beam_length)
+
+                self.beamModel.show()
+        else:
+            self.beamModel.hide()
 
         if self.walking:
             stand_control = self.actor.getAnimControl("stand")
