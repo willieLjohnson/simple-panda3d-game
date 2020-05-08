@@ -98,6 +98,8 @@ class Game(ShowBase):
 
         self.temp_enemy = WalkingEnemy(Vec3(5, 0, 0))
 
+        self.temp_trap = TrapEnemy(Vec3(-2, 7, 0))
+
     def update_key_map(self, control_name, control_state):
         self.keyMap[control_name] = control_state
 
@@ -107,6 +109,8 @@ class Game(ShowBase):
         self.player.update(self.keyMap, dt)
 
         self.temp_enemy.update(self.player, dt)
+
+        self.temp_trap.update(self.player, dt)
 
         if self.keyMap["shoot"]:
             print("Zap!")

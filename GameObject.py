@@ -211,27 +211,25 @@ class TrapEnemy(Enemy):
 
         self.ignorePlayer = False
 
-
-def run_logic(self, player, dt):
-    if self.moveDirection != 0:
-        self.walking = True
-        if self.moveInX:
-            self.velocity.addX(self.moveDirection * self.acceleration * dt)
+    def run_logic(self, player, dt):
+        if self.moveDirection != 0:
+            self.walking = True
+            if self.moveInX:
+                self.velocity.addX(self.moveDirection * self.acceleration * dt)
+            else:
+                self.velocity.addY(self.moveDirection * self.acceleration * dt)
         else:
-            self.velocity.addY(self.moveDirection * self.acceleration * dt)
-    else:
-        self.walking = False
-        diff = player.actor.getPos() - self.actor.getPos()
-        if self.moveInX:
-            detector = diff.y
-            movement = diff.x
-        else:
-            detector = diff.x
-            movement = diff.y
+            self.walking = False
+            diff = player.actor.getPos() - self.actor.getPos()
+            if self.moveInX:
+                detector = diff.y
+                movement = diff.x
+            else:
+                detector = diff.x
+                movement = diff.y
 
-        if abs(detector) < 0.5:
-            self.moveDirection = math.copysign(1, movement)
+            if abs(detector) < 0.5:
+                self.moveDirection = math.copysign(1, movement)
 
-
-def alter_health(self, d_health):
-    pass
+    def alter_health(self, d_health):
+        pass
