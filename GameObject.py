@@ -1,5 +1,6 @@
 from panda3d.core import Vec3, Vec2
 from direct.actor.Actor import Actor
+from panda3d.core import CollisionRay, CollisionHandlerQueue
 from panda3d.core import CollisionSphere, CollisionNode
 import math
 
@@ -87,6 +88,17 @@ class Player(GameObject):
 
         self.actor.loop("stand")
 
+        self.ray = CollisionRay(0, 0, 0, 0, 1, 0)
+        ray_node = CollisionNode("playerRay")
+        ray_node.addSolid(self.ray)
+
+        self.rayNodePath = render.attachNewNode(ray_node)
+        self.rayQueue = CollisionHandlerQueue()
+
+        base.cTrav.addCollider(self.rayNodePath, self.rayQueue)
+
+        self.damangePerSecond = -5.0
+
     def update(self, keys, dt):
         GameObject.update(self, dt)
 
@@ -104,6 +116,18 @@ class Player(GameObject):
         if keys["right"]:
             self.walking = True
             self.velocity.addX(self.acceleration * dt)
+        if keys["shoot"]:
+            if self.rayQueue.getNumEntries() > 0:
+                self.rayQueue.sortEntries()
+                ray_hit = self.rayQueue.getEntry(0)
+                hit_pos = ray_hit.getSurfacePoint(render)
+
+                hit_node_path = ray_hit.getIntoNodePath()
+                print(hit_node_path)
+                if hit_node_path.hasPythonTag("owner"):
+                    hit_object = hit_node_path.getPythonTag("owner")
+                    if not isinstance(hit_object, TrapEnemy):
+                        hit_object.alter_health(self.damangePerSecond * dt)
 
         if self.walking:
             stand_control = self.actor.getAnimControl("stand")
@@ -119,6 +143,10 @@ class Player(GameObject):
                 self.actor.stop("walk")
                 self.actor.loop("stand")
 
+    def cleanup(self):
+        base.cTrav.removeCollider(self.rayNodePath)
+
+        GameObject.cleanup(self)
 
 class Enemy(GameObject):
     def __init__(self, pos, model_name, model_anims, max_health, max_speed, collider_name):
