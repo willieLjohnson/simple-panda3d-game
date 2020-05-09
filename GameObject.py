@@ -378,6 +378,16 @@ class WalkingEnemy(Enemy):
         self.attackSegment.setPointA(self.actor.getPos())
         self.attackSegment.setPointB(self.actor.getPos() + self.actor.getQuat().getForward() * self.attackDistance)
 
+    def alter_health(self, d_health):
+        Enemy.alter_health(self, d_health)
+        self.update_health_visual()
+
+    def update_health_visual(self):
+        perc = self.health / self.maxHealth
+        if perc < 0:
+            perc = 0
+        self.actor.setColorScale(perc, perc, perc, 1)
+        
     def cleanup(self):
         base.cTrav.removeCollider(self.attackSegmentNodePath)
         self.attackSegmentNodePath.removeNode()
