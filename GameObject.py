@@ -2,8 +2,10 @@ from panda3d.core import Vec3, Vec2
 from direct.actor.Actor import Actor
 from panda3d.core import BitMask32
 from panda3d.core import CollisionRay, CollisionHandlerQueue
+from panda3d.core import CollisionSegment
 from panda3d.core import CollisionSphere, CollisionNode
 from panda3d.core import Plane, Point3
+import random
 import math
 
 FRICTION = 150.0
@@ -270,6 +272,28 @@ class WalkingEnemy(Enemy):
 
         self.collider.node().setIntoCollideMask(mask)
 
+        self.attackSegment = CollisionSegment(0, 0, 0, 1, 0, 0)
+        segment_node = CollisionNode("enemyAttackSegment")
+        segment_node.addSolid(self.attackSegment)
+
+        mask = BitMask32()
+        mask.setBit(1)
+        segment_node.setFromCollideMask(mask)
+
+        mask = BitMask32()
+        segment_node.setIntoCollideMask(mask)
+
+        self.attackSegmentNodePath = render.attachNewNode(segment_node)
+        self.segmentQueue = CollisionHandlerQueue()
+
+        base.cTrav.addCollider(self.attackSegmentNodePath, self.segmentQueue)
+
+        self.attackDamage = -1
+
+        self.attackDelay = 0.3
+        self.attackDelayTimer = 0
+        self.attackWaitTimer = 0
+
     def run_logic(self, player, dt):
         vector_to_player = player.actor.getPos() - self.actor.getPos()
 
@@ -281,15 +305,47 @@ class WalkingEnemy(Enemy):
         heading = self.yVector.signedAngleDeg(vector_to_player_2d)
 
         if distance_to_player > self.attackDistance * 0.9:
-            self.walking = True
-            vector_to_player.setZ(0)
-            vector_to_player.normalize()
-            self.velocity += vector_to_player * self.acceleration * dt
+            attack_control = self.actor.getAnimControl("attack")
+            if not attack_control.isPlaying():
+                self.walking = True
+                vector_to_player.setZ(0)
+                vector_to_player.normalize()
+                self.velocity += vector_to_player * self.acceleration * dt
+                self.attackWaitTimer = 0.2
+                self.attackDelayTimer = 0
         else:
             self.walking = False
             self.velocity.set(0, 0, 0)
 
+            if self.attackDelayTimer > 0:
+                self.attackDelayTimer -= dt
+                if self.attackDelayTimer <= 0:
+                    if self.segmentQueue.getNumEntries() > 0:
+                        self.segmentQueue.sortEntries()
+                        segment_hit = self.segmentQueue.getEntry(0)
+
+                        hit_node_path = segment_hit.getIntoNodePath()
+                        if hit_node_path.hasPythonTag("owner"):
+                            hit_object = hit_node_path.getPythonTag("owner")
+                            hit_object.alter_health(self.attackDamage)
+                            self.attackWaitTimer = 1.0
+            elif self.attackWaitTimer > 0:
+                self.attackWaitTimer -= dt
+                if self.attackWaitTimer <= 0:
+                    self.attackWaitTimer = random.uniform(0.5, 0.7)
+                    self.attackDelayTimer = self.attackDelay
+                    self.actor.play("attack")
+
         self.actor.setH(heading)
+
+        self.attackSegment.setPointA(self.actor.getPos())
+        self.attackSegment.setPointB(self.actor.getPos() + self.actor.getQuat().getForward() * self.attackDistance)
+
+    def cleanup(self):
+        base.cTrav.removeCollider(self.attackSegmentNodePath)
+        self.attackSegmentNodePath.removeNode()
+
+        GameObject.cleanup()
 
 
 class TrapEnemy(Enemy):
