@@ -1,12 +1,16 @@
-from panda3d.core import Vec3, Vec2
+import math
+import random
+
 from direct.actor.Actor import Actor
+from direct.gui.OnscreenText import OnscreenText
+from direct.gui.OnscreenImage import OnscreenImage
 from panda3d.core import BitMask32
 from panda3d.core import CollisionRay, CollisionHandlerQueue
 from panda3d.core import CollisionSegment
 from panda3d.core import CollisionSphere, CollisionNode
+from panda3d.core import TextNode
 from panda3d.core import Plane, Point3
-import random
-import math
+from panda3d.core import Vec3, Vec2
 
 FRICTION = 150.0
 
@@ -132,6 +136,35 @@ class Player(GameObject):
 
         self.yVector = Vec2(0, 1)
 
+        self.score = 0
+        self.scoreUI = OnscreenText(text="0",
+                                    pos=(-1.3, 0.825),
+                                    mayChange=True,
+                                    align=TextNode.ALeft)
+        
+        self.healthIcons = []
+        for i in range(self.maxHealth):
+            icon = OnscreenImage(image="UI/health.png",
+                                 pos=(-1.275 + i * 0.075, 0, 0.95),
+                                 scale=0.04)
+            icon.setTransparency(True)
+            self.healthIcons.append(icon)
+
+    def update_score(self):
+        self.scoreUI.setText(str(self.score))
+
+    def alter_health(self, d_health):
+        GameObject.alter_health(self, d_health)
+
+        self.update_health_ui()
+
+    def update_health_ui(self):
+        for index, icon in enumerate(self.healthIcons):
+            if index < self.health:
+                icon.show()
+            else:
+                icon.hide()
+
     def update(self, keys, dt):
         GameObject.update(self, dt)
 
@@ -215,6 +248,10 @@ class Player(GameObject):
 
     def cleanup(self):
         base.cTrav.removeCollider(self.rayNodePath)
+
+        self.scoreUI.removeNode()
+        for icon in self.healthIcons:
+            icon.removeNode()
 
         GameObject.cleanup(self)
 
