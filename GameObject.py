@@ -91,11 +91,11 @@ class Player(GameObject):
                             "player")
 
         self.actor.getChild(0).setH(180)
+        self.actor.loop("stand")
 
+        # Collision Detection
         base.pusher.addCollider(self.collider, self.actor)
         base.cTrav.addCollider(self.collider, base.pusher)
-
-        self.actor.loop("stand")
 
         mask = BitMask32()
         mask.setBit(1)
@@ -107,6 +107,7 @@ class Player(GameObject):
 
         self.collider.node().setFromCollideMask(mask)
 
+        # Laser attack
         self.ray = CollisionRay(0, 0, 0, 0, 1, 0)
         ray_node = CollisionNode("playerRay")
         ray_node.addSolid(self.ray)
@@ -131,6 +132,7 @@ class Player(GameObject):
         self.beamModel.setLightOff()
         self.beamModel.hide()
 
+        # Enemy Hit fx
         self.beamHitModel = loader.loadModel("Models/BambooLaser/bambooLaserHit")
         self.beamHitModel.reparentTo(render)
         self.beamHitModel.setZ(1.5)
@@ -145,12 +147,22 @@ class Player(GameObject):
         self.beamHitLight.setAttenuation((1.0, 0.1, 0.5))
         self.beamHitLightNodePath = render.attachNewNode(self.beamHitLight)
 
+        # Player hit fx
+        self.damageTakenModel = loader.loadModel("Models/BambooLaser/playerHit.egg")
+        self.damageTakenModel.setLightOff()
+        self.damageTakenModel.setZ(1.0)
+        self.damageTakenModel.reparentTo(self.actor)
+        self.damageTakenModel.hide()
+
+        self.damageTakenModelTimer = 0
+        self.damageTakenModelDuration = 0.15
+
+        # Mouse attack variables
         self.lastMousePos = Vec2(0, 0)
-
         self.groundPlane = Plane(Vec3(0, 0, 1), Vec3(0, 0, 0))
-
         self.yVector = Vec2(0, 1)
 
+        # Player UI
         self.score = 0
         self.scoreUI = OnscreenText(text="0",
                                     pos=(-1.3, 0.825),
@@ -170,7 +182,9 @@ class Player(GameObject):
 
     def alter_health(self, d_health):
         GameObject.alter_health(self, d_health)
-
+        self.damageTakenModel.show()
+        self.damageTakenModel.setH(random.uniform(0.0, 360.0))
+        self.damageTakenModelTimer = self.damageTakenModelDuration
         self.update_health_ui()
 
     def update_health_ui(self):
@@ -221,6 +235,12 @@ class Player(GameObject):
         self.beamHitModel.setScale(math.sin(self.beamHitTimer * 3.142 / self.beamHitPulseRate) * 0.4 + 0.9)
 
         self.lastMousePos = mouse_pos
+
+        if self.damageTakenModelTimer > 0:
+            self.damageTakenModelTimer -= dt
+            self.damageTakenModel.setScale(2.0 - self.damageTakenModelTimer / self.damageTakenModelDuration)
+            if self.damageTakenModelTimer <= 0:
+                self.damageTakenModel.hide()
 
         if keys["up"]:
             self.walking = True
