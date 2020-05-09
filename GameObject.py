@@ -10,7 +10,8 @@ from panda3d.core import CollisionSegment
 from panda3d.core import CollisionSphere, CollisionNode
 from panda3d.core import TextNode
 from panda3d.core import Plane, Point3
-from panda3d.core import Vec3, Vec2
+from panda3d.core import PointLight
+from panda3d.core import Vec3, Vec2, Vec4
 
 FRICTION = 150.0
 
@@ -130,6 +131,20 @@ class Player(GameObject):
         self.beamModel.setLightOff()
         self.beamModel.hide()
 
+        self.beamHitModel = loader.loadModel("Models/BambooLaser/bambooLaserHit")
+        self.beamHitModel.reparentTo(render)
+        self.beamHitModel.setZ(1.5)
+        self.beamHitModel.setLightOff()
+        self.beamHitModel.hide()
+
+        self.beamHitPulseRate = 0.15
+        self.beamHitTimer = 0
+
+        self.beamHitLight = PointLight("beamHitLight")
+        self.beamHitLight.setColor(Vec4(0.1, 1.0, 0.2, 1))
+        self.beamHitLight.setAttenuation((1.0, 0.1, 0.5))
+        self.beamHitLightNodePath = render.attachNewNode(self.beamHitLight)
+
         self.lastMousePos = Vec2(0, 0)
 
         self.groundPlane = Plane(Vec3(0, 0, 1), Vec3(0, 0, 0))
@@ -141,7 +156,7 @@ class Player(GameObject):
                                     pos=(-1.3, 0.825),
                                     mayChange=True,
                                     align=TextNode.ALeft)
-        
+
         self.healthIcons = []
         for i in range(self.maxHealth):
             icon = OnscreenImage(image="UI/health.png",
@@ -199,6 +214,12 @@ class Player(GameObject):
             self.ray.setOrigin(self.actor.getPos())
             self.ray.setDirection(firing_vector)
 
+        self.beamHitTimer -= dt
+        if self.beamHitTimer <= 0:
+            self.beamHitTimer = self.beamHitPulseRate
+            self.beamHitModel.setH(random.uniform(0.0, 360.0))
+        self.beamHitModel.setScale(math.sin(self.beamHitTimer * 3.142 / self.beamHitPulseRate) * 0.4 + 0.9)
+
         self.lastMousePos = mouse_pos
 
         if keys["up"]:
@@ -215,6 +236,8 @@ class Player(GameObject):
             self.velocity.addX(self.acceleration * dt)
         if keys["shoot"]:
             if self.rayQueue.getNumEntries() > 0:
+                scored_hit = False
+
                 self.rayQueue.sortEntries()
                 ray_hit = self.rayQueue.getEntry(0)
                 hit_pos = ray_hit.getSurfacePoint(render)
@@ -224,13 +247,32 @@ class Player(GameObject):
                     hit_object = hit_node_path.getPythonTag("owner")
                     if not isinstance(hit_object, TrapEnemy):
                         hit_object.alter_health(self.damagePerSecond * dt)
+                        scored_hit = True
 
                 beam_length = (hit_pos - self.actor.getPos()).length()
                 self.beamModel.setSy(beam_length)
 
                 self.beamModel.show()
+
+                if scored_hit:
+                    self.beamHitModel.show()
+
+                    self.beamHitModel.setPos(hit_pos)
+                    self.beamHitLightNodePath.setPos(hit_pos + Vec3(0, 0, 0.5))
+
+                    if not render.hasLight(self.beamHitLightNodePath):
+                        render.setLight(self.beamHitLightNodePath)
+                else:
+                    if render.hasLight(self.beamHitLightNodePath):
+                        render.clearLight(self.beamHitLightNodePath)
+
+                    self.beamHitModel.hide()
         else:
+            if render.hasLight(self.beamHitLightNodePath):
+                render.clearLight(self.beamHitLightNodePath)
+
             self.beamModel.hide()
+            self.beamHitModel.hide()
 
         if self.walking:
             stand_control = self.actor.getAnimControl("stand")
@@ -253,6 +295,9 @@ class Player(GameObject):
         for icon in self.healthIcons:
             icon.removeNode()
 
+        self.beamHitModel.removeNode()
+        render.clearLight(self.beamHitLightNodePath)
+        self.beamHitLightNodePath.removeNode()
         GameObject.cleanup(self)
 
 
@@ -387,7 +432,7 @@ class WalkingEnemy(Enemy):
         if perc < 0:
             perc = 0
         self.actor.setColorScale(perc, perc, perc, 1)
-        
+
     def cleanup(self):
         base.cTrav.removeCollider(self.attackSegmentNodePath)
         self.attackSegmentNodePath.removeNode()
