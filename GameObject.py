@@ -4,6 +4,7 @@ import random
 from direct.actor.Actor import Actor
 from direct.gui.OnscreenText import OnscreenText
 from direct.gui.OnscreenImage import OnscreenImage
+from panda3d.core import AudioSound
 from panda3d.core import BitMask32
 from panda3d.core import CollisionRay, CollisionHandlerQueue
 from panda3d.core import CollisionSegment
@@ -37,6 +38,9 @@ class GameObject:
         self.collider = self.actor.attachNewNode(collider_node)
         self.collider.setPythonTag("owner", self)
 
+        # SFX
+        self.deathSound = None
+
     def update(self, dt):
         speed = self.velocity.length()
         if speed > self.maxSpeed:
@@ -58,10 +62,14 @@ class GameObject:
         self.actor.setPos(self.actor.getPos() + self.velocity * dt)
 
     def alter_health(self, d_health):
+        previous_health = self.health
         self.health += d_health
 
         if self.health > self.maxHealth:
             self.health = self.maxHealth
+
+        if previous_health > 0 and self.health <= 0 and self.deathSound is not None:
+            self.deathSound.play()
 
     def cleanup(self):
         if self.collider is not None and not self.collider.isEmpty():
@@ -177,6 +185,14 @@ class Player(GameObject):
             icon.setTransparency(True)
             self.healthIcons.append(icon)
 
+        # SFX
+        self.laserSoundNoHit = loader.loadSfx("Sounds/laserNoHit.ogg")
+        self.laserSoundNoHit.setLoop(True)
+        self.laserSoundHit = loader.loadSfx("Sounds/laserHit.ogg")
+        self.laserSoundHit.setLoop(True)
+
+        self.hurtSound = loader.loadSfx("Sounds/FemaleDmgNoise.ogg")
+
     def update_score(self):
         self.scoreUI.setText(str(self.score))
 
@@ -186,6 +202,7 @@ class Player(GameObject):
         self.damageTakenModel.setH(random.uniform(0.0, 360.0))
         self.damageTakenModelTimer = self.damageTakenModelDuration
         self.update_health_ui()
+        self.hurtSound.play()
 
     def update_health_ui(self):
         for index, icon in enumerate(self.healthIcons):
@@ -275,6 +292,11 @@ class Player(GameObject):
                 self.beamModel.show()
 
                 if scored_hit:
+                    if self.laserSoundNoHit.status() == AudioSound.PLAYING:
+                        self.laserSoundNoHit.stop()
+                    if self.laserSoundHit.status() != AudioSound.PLAYING:
+                        self.laserSoundHit.play()
+
                     self.beamHitModel.show()
 
                     self.beamHitModel.setPos(hit_pos)
@@ -283,11 +305,21 @@ class Player(GameObject):
                     if not render.hasLight(self.beamHitLightNodePath):
                         render.setLight(self.beamHitLightNodePath)
                 else:
+                    if self.laserSoundHit.status() == AudioSound.PLAYING:
+                        self.laserSoundHit.stop()
+                    if self.laserSoundNoHit.status() != AudioSound.PLAYING:
+                        self.laserSoundNoHit.play()
+
                     if render.hasLight(self.beamHitLightNodePath):
                         render.clearLight(self.beamHitLightNodePath)
 
                     self.beamHitModel.hide()
         else:
+            if self.laserSoundNoHit.status() == AudioSound.PLAYING:
+                self.laserSoundNoHit.stop()
+            if self.laserSoundHit.status() == AudioSound.PLAYING:
+                self.laserSoundHit.stop()
+
             if render.hasLight(self.beamHitLightNodePath):
                 render.clearLight(self.beamHitLightNodePath)
 
@@ -319,6 +351,9 @@ class Player(GameObject):
         render.clearLight(self.beamHitLightNodePath)
         self.beamHitLightNodePath.removeNode()
         GameObject.cleanup(self)
+
+        self.laserSoundHit.stop()
+        self.laserSoundNoHit.stop()
 
 
 class Enemy(GameObject):
@@ -362,6 +397,9 @@ class WalkingEnemy(Enemy):
                        3.0,
                        7.0,
                        "walkingEnemy")
+
+        self.deathSound = loader.loadSfx("Sounds/enemyDie.ogg")
+        self.attackSound = loader.loadSfx("Sounds/enemyAttack.ogg")
 
         self.attackDistance = 0.75
         self.acceleration = 100.0
@@ -440,6 +478,7 @@ class WalkingEnemy(Enemy):
                     self.attackWaitTimer = random.uniform(0.5, 0.7)
                     self.attackDelayTimer = self.attackDelay
                     self.actor.play("attack")
+                    self.attackSound.play()
 
         self.actor.setH(heading)
 
@@ -496,6 +535,12 @@ class TrapEnemy(Enemy):
 
         self.collider.node().setFromCollideMask(mask)
 
+        # SFX
+        self.impactSound = loader.loadSfx("Sounds/trapHitsSomething.ogg")
+        self.stopSound = loader.loadSfx("Sounds/trapStop.ogg")
+        self.movementSound = loader.loadSfx("Sounds/trapSlide.ogg")
+        self.movementSound.setLoop(True)
+
     def run_logic(self, player, dt):
         if self.moveDirection != 0:
             self.walking = True
@@ -515,6 +560,11 @@ class TrapEnemy(Enemy):
 
             if abs(detector) < 0.5:
                 self.moveDirection = math.copysign(1, movement)
+                self.movementSound.play()
+
+    def cleanup(self):
+        self.movementSound.stop()
+        Enemy.cleanup(self)
 
     def alter_health(self, d_health):
         pass

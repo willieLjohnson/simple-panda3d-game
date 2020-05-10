@@ -20,7 +20,7 @@ class Game(ShowBase):
         ShowBase.__init__(self)
 
         self.disableMouse()
-
+    
         properties = WindowProperties()
         properties.setSize(1000, 750)
         self.win.requestProperties(properties)
@@ -135,6 +135,14 @@ class Game(ShowBase):
 
         self.exitFunc = self.cleanup
 
+        # SFX
+        music = self.loader.loadMusic("Music/battle-music.ogg")
+        music.setLoop(True)
+        music.setVolume(0.075)
+        music.play()
+
+        self.enemySpawnSound = self.loader.loadSfx("Sounds/enemySpawn.ogg")
+
     def start_game(self):
         self.cleanup()
 
@@ -206,6 +214,7 @@ class Game(ShowBase):
             spawn_point = random.choice(self.spawnPoints)
             new_enemy = WalkingEnemy(spawn_point)
             self.enemies.append(new_enemy)
+            self.enemySpawnSound.play()
 
     def stop_trap(self, entry):
         collider = entry.getFromNodePath()
@@ -213,6 +222,8 @@ class Game(ShowBase):
             trap = collider.getPythonTag("owner")
             trap.moveDirection = 0
             trap.ignorePlayer = False
+            trap.movementSound.stop()
+            trap.stopSound.play()
 
     def trap_hits_something(self, entry):
         collider = entry.getFromNodePath()
@@ -231,6 +242,8 @@ class Game(ShowBase):
                         trap.ignorePlayer = True
                 else:
                     obj.alter_health(-10)
+
+                trap.impactSound.play()
 
     def update_key_map(self, control_name, control_state):
         self.keyMap[control_name] = control_state
