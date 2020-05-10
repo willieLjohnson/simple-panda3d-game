@@ -1,3 +1,4 @@
+from direct.gui.DirectGui import *
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import AmbientLight
 from panda3d.core import CollisionHandlerPusher
@@ -116,9 +117,39 @@ class Game(ShowBase):
         self.difficultyInterval = 5.0
         self.difficultyTimer = self.difficultyInterval
 
-        self.start_game()
+        # GUI
+        self.gameOverScreen = DirectDialog(frameSize=(-0.7, 0.7, -0.7, 0.7),
+                                           fadeScreen=0.4,
+                                           relief=DGG.FLAT)
+        self.gameOverScreen.hide()
 
-        self.updateTask = self.taskMgr.add(self.update, "update")
+        label = DirectLabel(text="Game Over!",
+                            parent=self.gameOverScreen,
+                            scale=0.1,
+                            pos=(0, 0, 0.2))
+        self.finalScoreLabel = DirectLabel(text="",
+                                           parent=self.gameOverScreen,
+                                           scale=0.07,
+                                           pos=(0, 0, 0))
+
+        restart_button = DirectButton(text="Restart",
+                                      command=self.start_game,
+                                      pos=(-0.3, 0, -0.2),
+                                      parent=self.gameOverScreen,
+                                      scale=0.07)
+        quit_button = DirectButton(text="Quit",
+                                   command=self.quit,
+                                   pos=(0.3, 0, -0.2),
+                                   parent=self.gameOverScreen,
+                                   scale=0.07)
+
+        # SFX
+        music = self.loader.loadMusic("Music/battle-music.ogg")
+        music.setLoop(True)
+        music.setVolume(0.075)
+        music.play()
+
+        self.enemySpawnSound = self.loader.loadSfx("Sounds/enemySpawn.ogg")
 
         self.pusher.add_in_pattern("%fn-into-%in")
 
@@ -129,22 +160,22 @@ class Game(ShowBase):
 
         self.exitFunc = self.cleanup
 
-        # SFX
-        music = self.loader.loadMusic("Music/battle-music.ogg")
-        music.setLoop(True)
-        music.setVolume(0.075)
-        music.play()
+        self.updateTask = self.taskMgr.add(self.update, "update")
 
-        self.enemySpawnSound = self.loader.loadSfx("Sounds/enemySpawn.ogg")
+        self.start_game()
+
+
+
+
 
     def start_game(self):
-        self.cleanup()
+        self.gameOverScreen.hide()
 
+        self.cleanup()
         self.player = Player()
 
         self.maxEnemies = 2
         self.spawnInterval = self.initialSpawnInterval
-
         self.difficultyTimer = self.difficultyInterval
 
         side_trap_slots = [
@@ -300,6 +331,11 @@ class Game(ShowBase):
                         self.maxEnemies += 1
                     if self.spawnInterval > self.minimumSpawnInterval:
                         self.spawnInterval -= 0.1
+            else:
+                if self.gameOverScreen.isHidden():
+                    self.gameOverScreen.show()
+                    self.finalScoreLabel["text"] = "Final score: " + str(self.player.score)
+                    self.finalScoreLabel.setText()
 
         return task.cont
 
