@@ -2,16 +2,16 @@ import math
 import random
 
 from direct.actor.Actor import Actor
-from direct.gui.OnscreenText import OnscreenText
 from direct.gui.OnscreenImage import OnscreenImage
+from direct.gui.OnscreenText import OnscreenText
 from panda3d.core import AudioSound
 from panda3d.core import BitMask32
 from panda3d.core import CollisionRay, CollisionHandlerQueue
 from panda3d.core import CollisionSegment
 from panda3d.core import CollisionSphere, CollisionNode
-from panda3d.core import TextNode
 from panda3d.core import Plane, Point3
 from panda3d.core import PointLight
+from panda3d.core import TextNode
 from panda3d.core import Vec3, Vec2, Vec4
 
 FRICTION = 150.0

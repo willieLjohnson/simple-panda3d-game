@@ -1,15 +1,9 @@
-import random
-
-from direct.actor.Actor import Actor
 from direct.showbase.ShowBase import ShowBase
-
 from panda3d.core import AmbientLight
 from panda3d.core import CollisionHandlerPusher
-from panda3d.core import CollisionSphere, CollisionNode
-from panda3d.core import CollisionTube
 from panda3d.core import CollisionTraverser
+from panda3d.core import CollisionTube
 from panda3d.core import DirectionalLight
-from panda3d.core import Vec4, Vec3
 from panda3d.core import WindowProperties
 
 from GameObject import *
@@ -20,7 +14,7 @@ class Game(ShowBase):
         ShowBase.__init__(self)
 
         self.disableMouse()
-    
+
         properties = WindowProperties()
         properties.setSize(1000, 750)
         self.win.requestProperties(properties)
