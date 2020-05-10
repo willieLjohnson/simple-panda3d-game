@@ -364,9 +364,7 @@ class WalkingEnemy(Enemy):
                        "walkingEnemy")
 
         self.attackDistance = 0.75
-
         self.acceleration = 100.0
-
         self.yVector = Vec2(0, 1)
 
         mask = BitMask32()
@@ -395,6 +393,11 @@ class WalkingEnemy(Enemy):
         self.attackDelay = 0.3
         self.attackDelayTimer = 0
         self.attackWaitTimer = 0
+
+        self.actor.play("spawn")
+        spawn_control = self.actor.getAnimControl("spawn")
+        if spawn_control is not None and spawn_control.isPlaying():
+            return
 
     def run_logic(self, player, dt):
         vector_to_player = player.actor.getPos() - self.actor.getPos()
@@ -457,7 +460,7 @@ class WalkingEnemy(Enemy):
         base.cTrav.removeCollider(self.attackSegmentNodePath)
         self.attackSegmentNodePath.removeNode()
 
-        GameObject.cleanup()
+        GameObject.cleanup(self)
 
 
 class TrapEnemy(Enemy):
