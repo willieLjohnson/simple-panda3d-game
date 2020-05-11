@@ -118,20 +118,77 @@ class Game(ShowBase):
         self.difficultyTimer = self.difficultyInterval
 
         # GUI
+        button_images = (
+            self.loader.loadTexture("UI/UIButton.png"),
+            self.loader.loadTexture("UI/UIButtonPressed.png"),
+            self.loader.loadTexture("UI/UIButtonHighlighted.png"),
+            self.loader.loadTexture("UI/UIButtonDisabled.png")
+        )
+        self.font = self.loader.loadFont("Fonts/Wbxkomik.ttf")
+
+        self.titleMenuBackdrop = DirectFrame(frameColor=(0, 0, 0, 1),
+                                             frameSize=(-1, 1, -1, 1),
+                                             parent=self.render2d)
+        self.titleMenu = DirectFrame(frameColor=(1, 1, 1, 0))
+        game_title1 = DirectLabel(text="Panda-chan",
+                                  scale=0.1,
+                                  pos=(0, 0, 0.9),
+                                  parent=self.titleMenu,
+                                  relief=None,
+                                  text_font=self.font,
+                                  text_fg=(1, 1, 1, 1))
+        game_title2 = DirectLabel(text="and the",
+                                  scale=0.07,
+                                  pos=(0, 0, 0.79),
+                                  parent=self.titleMenu,
+                                  text_font=self.font,
+                                  text_fg=(0.5, 0.5, 0.5, 1))
+        game_title3 = DirectLabel(text="Endless Horde",
+                                  scale=0.125,
+                                  pos=(0, 0, 0.65),
+                                  parent=self.titleMenu,
+                                  relief=None,
+                                  text_font=self.font,
+                                  text_fg=(1, 1, 1, 1))
+        start_game_button = DirectButton(text="Start Game",
+                                         command=self.start_game,
+                                         pos=(0, 0, 0.2),
+                                         parent=self.titleMenu,
+                                         scale=0.1,
+                                         text_font=self.font,
+                                         clickSound=self.loader.loadSfx("Sounds/UIClick.ogg"),
+                                         frameTexture=button_images,
+                                         frameSize=(-4, 4, -1, 1),
+                                         text_scale=0.75,
+                                         relief=DGG.FLAT,
+                                         text_pos=(0, -0.2))
+        start_game_button.setTransparency(True)
+        main_menu_quit_button = DirectButton(text="Quit",
+                                             command=self.quit,
+                                             pos=(0, 0, -0.2),
+                                             parent=self.titleMenu,
+                                             scale=0.1,
+                                             text_font=self.font,
+                                             clickSound=self.loader.loadSfx("Sounds/UIClick.ogg"),
+                                             frameTexture=button_images,
+                                             frameSize=(-4, 4, -1, 1),
+                                             text_scale=0.75,
+                                             relief=DGG.FLAT,
+                                             text_pos=(0, -0.2))
+        main_menu_quit_button.setTransparency(True)
+
         self.gameOverScreen = DirectDialog(frameSize=(-0.7, 0.7, -0.7, 0.7),
                                            fadeScreen=0.4,
                                            relief=DGG.FLAT,
                                            frameTexture="UI/stoneFrame.png")
         self.gameOverScreen.hide()
 
-        self.font = self.loader.loadFont("Fonts/Wbxkomik.ttf")
-
-        label = DirectLabel(text="Game Over!",
-                            parent=self.gameOverScreen,
-                            scale=0.1,
-                            pos=(0, 0, 0.2),
-                            text_font=self.font,
-                            relief=None)
+        game_over_label = DirectLabel(text="Game Over!",
+                                      parent=self.gameOverScreen,
+                                      scale=0.1,
+                                      pos=(0, 0, 0.2),
+                                      text_font=self.font,
+                                      relief=None)
 
         self.finalScoreLabel = DirectLabel(text="",
                                            parent=self.gameOverScreen,
@@ -139,13 +196,6 @@ class Game(ShowBase):
                                            pos=(0, 0, 0),
                                            text_font=self.font,
                                            relief=None)
-
-        button_images = (
-            self.loader.loadTexture("UI/UIButton.png"),
-            self.loader.loadTexture("UI/UIButtonPressed.png"),
-            self.loader.loadTexture("UI/UIButtonHighlighted.png"),
-            self.loader.loadTexture("UI/UIButtonDisabled.png")
-        )
 
         restart_button = DirectButton(text="Restart",
                                       command=self.start_game,
@@ -194,9 +244,9 @@ class Game(ShowBase):
 
         self.updateTask = self.taskMgr.add(self.update, "update")
 
-        self.start_game()
-
     def start_game(self):
+        self.titleMenu.hide()
+        self.titleMenuBackdrop.hide()
         self.gameOverScreen.hide()
 
         self.cleanup()
