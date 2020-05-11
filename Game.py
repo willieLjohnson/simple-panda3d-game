@@ -98,7 +98,7 @@ class Game(ShowBase):
 
         self.spawnPoints = []
         num_points_per_wall = 5
-        for i in range(num_points_per_wall):
+        for _ in range(num_points_per_wall):
             coord = 7.0 / num_points_per_wall + 0.5
             self.spawnPoints.append(Vec3(-7.0, coord, 0))
             self.spawnPoints.append(Vec3(7.0, coord, 0))
@@ -120,28 +120,60 @@ class Game(ShowBase):
         # GUI
         self.gameOverScreen = DirectDialog(frameSize=(-0.7, 0.7, -0.7, 0.7),
                                            fadeScreen=0.4,
-                                           relief=DGG.FLAT)
+                                           relief=DGG.FLAT,
+                                           frameTexture="UI/stoneFrame.png")
         self.gameOverScreen.hide()
+
+        self.font = self.loader.loadFont("Fonts/Wbxkomik.ttf")
 
         label = DirectLabel(text="Game Over!",
                             parent=self.gameOverScreen,
                             scale=0.1,
-                            pos=(0, 0, 0.2))
+                            pos=(0, 0, 0.2),
+                            text_font=self.font,
+                            relief=None)
+
         self.finalScoreLabel = DirectLabel(text="",
                                            parent=self.gameOverScreen,
                                            scale=0.07,
-                                           pos=(0, 0, 0))
+                                           pos=(0, 0, 0),
+                                           text_font=self.font,
+                                           relief=None)
+
+        button_images = (
+            self.loader.loadTexture("UI/UIButton.png"),
+            self.loader.loadTexture("UI/UIButtonPressed.png"),
+            self.loader.loadTexture("UI/UIButtonHighlighted.png"),
+            self.loader.loadTexture("UI/UIButtonDisabled.png")
+        )
 
         restart_button = DirectButton(text="Restart",
                                       command=self.start_game,
                                       pos=(-0.3, 0, -0.2),
                                       parent=self.gameOverScreen,
-                                      scale=0.07)
+                                      scale=0.07,
+                                      text_font=self.font,
+                                      clickSound=self.loader.loadSfx("Sounds/UIClick.ogg"),
+                                      frameTexture=button_images,
+                                      frameSize=(-4, 4, -1, 1),
+                                      text_scale=0.75,
+                                      relief=DGG.FLAT,
+                                      text_pos=(0, -0.2))
+        restart_button.setTransparency(True)
+
         quit_button = DirectButton(text="Quit",
                                    command=self.quit,
                                    pos=(0.3, 0, -0.2),
                                    parent=self.gameOverScreen,
-                                   scale=0.07)
+                                   scale=0.07,
+                                   text_font=self.font,
+                                   clickSound=self.loader.loadSfx("Sounds/UIClick.ogg"),
+                                   frameTexture=button_images,
+                                   frameSize=(-4, 4, -1, 1),
+                                   text_scale=0.75,
+                                   relief=DGG.FLAT,
+                                   text_pos=(0, -0.2))
+        quit_button.setTransparency(True)
 
         # SFX
         music = self.loader.loadMusic("Music/battle-music.ogg")
@@ -163,10 +195,6 @@ class Game(ShowBase):
         self.updateTask = self.taskMgr.add(self.update, "update")
 
         self.start_game()
-
-
-
-
 
     def start_game(self):
         self.gameOverScreen.hide()
