@@ -175,7 +175,8 @@ class Player(GameObject):
         self.scoreUI = OnscreenText(text="0",
                                     pos=(-1.3, 0.825),
                                     mayChange=True,
-                                    align=TextNode.ALeft)
+                                    align=TextNode.ALeft,
+                                    font=base.font)
 
         self.healthIcons = []
         for i in range(self.maxHealth):
